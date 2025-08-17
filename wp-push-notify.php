@@ -3,7 +3,10 @@
 Plugin Name: WP Push Notify
 Description: Plugin para notificações push e integração com phpList.
 Version: 1.0.50
-Author: Seu Nome
+Author: Carlos Delfino <consultoria@carlosdelfino.eti.br>
+Requires at least: 5.8
+Tested up to: 6.5
+Requires PHP: 7.4
 */
 
 // Bloqueia acesso direto ao arquivo
@@ -630,3 +633,19 @@ if ($form_display === 'footer') {
 
 // Inclui stub/função de envio de Web Push (substitua por implementação real em produção)
 require_once plugin_dir_path(__FILE__) . 'webpush-lib-stub.php';
+
+// ---- Admin footer (links) ----
+function wppn_admin_footer_links() {
+    if (!is_admin()) { return; }
+    $page = isset($_GET['page']) ? sanitize_key($_GET['page']) : '';
+    if ($page !== 'wp-push-notify') { return; }
+    $owner = defined('WPPN_GH_OWNER') ? WPPN_GH_OWNER : 'RapportTecnologia';
+    $repo  = defined('WPPN_GH_REPO')  ? WPPN_GH_REPO  : 'wp-push-notify';
+    $repo_url = sprintf('https://github.com/%s/%s', $owner, $repo);
+    $web_url  = sprintf('https://rapport.tec.br/%s', $repo);
+    echo '<div style="margin-top:16px;opacity:.8"><small>'
+        . 'Repositório: <a href="' . esc_url($repo_url) . '" target="_blank" rel="noopener">' . esc_html($repo_url) . '</a>'
+        . ' — Página: <a href="' . esc_url($web_url) . '" target="_blank" rel="noopener">' . esc_html($web_url) . '</a>'
+        . '</small></div>';
+}
+add_action('admin_footer', 'wppn_admin_footer_links');
