@@ -1,0 +1,29 @@
+name: Release on tag
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    name: Create GitHub Release and upload ZIP
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build ZIP
+        run: |
+          ZIP_NAME="wp-push-notify.zip"
+          echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
+          zip -r "$ZIP_NAME" . -x ".git/*" ".github/*"
+
+      - name: Create Release and Upload Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.ZIP_NAME }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -2,7 +2,7 @@
 /*
 Plugin Name: WP Push Notify
 Description: Plugin para notificações push e integração com phpList.
-Version: 0.0.2
+Version: 0.0.3
 Author: Seu Nome
 */
 
@@ -10,6 +10,140 @@ Author: Seu Nome
 if (!defined('ABSPATH')) {
     exit;
 }
+
+// ===== GitHub Update Metadata =====
+if (!defined('WPPN_GH_OWNER')) { define('WPPN_GH_OWNER', 'RapportTecnologia'); }
+if (!defined('WPPN_GH_REPO'))  { define('WPPN_GH_REPO',  'wp-push-notify'); }
+
+// ===== Update Checker (GitHub) =====
+function wppn_get_github_latest_release() {
+    $transient_key = 'wppn_github_latest_release';
+    $cached = get_transient($transient_key);
+    if ($cached) { return $cached; }
+    $api = sprintf('https://api.github.com/repos/%s/%s/releases/latest', WPPN_GH_OWNER, WPPN_GH_REPO);
+    $resp = wp_remote_get($api, [
+        'headers' => [ 'Accept' => 'application/vnd.github+json', 'User-Agent' => 'WordPress-WPPN' ],
+        'timeout' => 15,
+    ]);
+    if (is_wp_error($resp)) { return false; }
+    $code = wp_remote_retrieve_response_code($resp);
+    if ($code !== 200) { return false; }
+    $body = json_decode(wp_remote_retrieve_body($resp), true);
+    if (!is_array($body) || empty($body['tag_name'])) { return false; }
+    $ver = ltrim(trim($body['tag_name']), 'vV');
+    $zip = sprintf('https://github.com/%s/%s/archive/refs/tags/%s.zip', WPPN_GH_OWNER, WPPN_GH_REPO, rawurlencode($body['tag_name']));
+    $result = [
+        'version' => $ver,
+        'tag' => $body['tag_name'],
+        'zipball' => $zip,
+        'html_url' => isset($body['html_url']) ? $body['html_url'] : sprintf('https://github.com/%s/%s/releases', WPPN_GH_OWNER, WPPN_GH_REPO),
+    ];
+    set_transient($transient_key, $result, WEEK_IN_SECONDS);
+    set_transient('wppn_github_last_check', time(), WEEK_IN_SECONDS);
+    return $result;
+}
+
+function wppn_inject_update_info($transient) {
+    if (empty($transient) || empty($transient->checked)) { return $transient; }
+    if (!function_exists('get_plugin_data')) { require_once ABSPATH . 'wp-admin/includes/plugin.php'; }
+    $plugin_file = plugin_basename(__FILE__);
+    $plugin_data = get_plugin_data(__FILE__, false, false);
+    $current_version = isset($plugin_data['Version']) ? $plugin_data['Version'] : '0.0.0';
+    $release = wppn_get_github_latest_release();
+    if (!$release) { return $transient; }
+    if (version_compare($release['version'], $current_version, '>')) {
+        $obj = (object) [
+            'slug' => dirname($plugin_file),
+            'plugin' => $plugin_file,
+            'new_version' => $release['version'],
+            'package' => $release['zipball'],
+            'url' => $release['html_url'],
+            'tested' => '6.5',
+            'requires' => '5.8',
+        ];
+        $transient->response[$plugin_file] = $obj;
+        update_option('wppn_latest_available', $release, false);
+    } else {
+        delete_option('wppn_latest_available');
+    }
+    return $transient;
+}
+add_filter('pre_set_site_transient_update_plugins', 'wppn_inject_update_info');
+
+function wppn_plugins_api($result, $action, $args) {
+    if ($action !== 'plugin_information') { return $result; }
+    $plugin_file = plugin_basename(__FILE__);
+    if (empty($args->slug) || $args->slug !== dirname($plugin_file)) { return $result; }
+    $release = wppn_get_github_latest_release();
+    if (!$release) { return $result; }
+    return (object) [
+        'name' => 'WP Push Notify',
+        'slug' => dirname($plugin_file),
+        'version' => $release['version'],
+        'download_link' => $release['zipball'],
+        'homepage' => $release['html_url'],
+        'sections' => [
+            'description' => __('Plugin de notificações push com integração phpList.', 'wp-push-notify'),
+            'changelog' => __('Consulte o CHANGELOG.md no repositório.', 'wp-push-notify'),
+        ],
+    ];
+}
+add_filter('plugins_api', 'wppn_plugins_api', 10, 3);
+
+function wppn_admin_notice_new_release() {
+    if (!current_user_can('update_plugins')) { return; }
+    $release = get_option('wppn_latest_available');
+    if (!$release || empty($release['version'])) { return; }
+    if (!function_exists('get_plugin_data')) { require_once ABSPATH . 'wp-admin/includes/plugin.php'; }
+    $plugin_data = get_plugin_data(__FILE__, false, false);
+    $current_version = isset($plugin_data['Version']) ? $plugin_data['Version'] : '0.0.0';
+    if (version_compare($release['version'], $current_version, '>')) {
+        $update_url = admin_url('plugins.php');
+        echo '<div class="notice notice-info is-dismissible"><p>'
+            . esc_html(sprintf(__('Nova versão do WP Push Notify disponível: %s (você está na %s). Atualize em Plugins.', 'wp-push-notify'), $release['version'], $current_version))
+            . ' <a href="' . esc_url($release['html_url']) . '" target="_blank">' . esc_html__('Notas da versão', 'wp-push-notify') . '</a>'
+            . ' | <a href="' . esc_url($update_url) . '">' . esc_html__('Ir para Plugins', 'wp-push-notify') . '</a>'
+            . '</p></div>';
+    } else {
+        delete_option('wppn_latest_available');
+    }
+}
+add_action('admin_notices', 'wppn_admin_notice_new_release');
+
+function wppn_maybe_auto_update($update, $item) {
+    $plugin_file = plugin_basename(__FILE__);
+    if (!empty($item->plugin) && $item->plugin === $plugin_file) {
+        $enabled = get_option('wppn_enable_auto_update') ? true : false;
+        return $enabled;
+    }
+    return $update;
+}
+add_filter('auto_update_plugin', 'wppn_maybe_auto_update', 10, 2);
+
+// Action links (Settings + Toggle auto-update)
+function wppn_plugin_action_links($links) {
+    $settings_url = add_query_arg(['page' => 'wp-push-notify'], admin_url('options-general.php'));
+    $settings_link = '<a href="' . esc_url($settings_url) . '">' . esc_html__('Configurações', 'wp-push-notify') . '</a>';
+    $enabled = (bool) get_option('wppn_enable_auto_update');
+    $action = $enabled ? 'disable' : 'enable';
+    $label = $enabled ? __('Desativar atualização automática', 'wp-push-notify') : __('Ativar atualização automática', 'wp-push-notify');
+    $toggle_url = wp_nonce_url(admin_url('admin-post.php?action=wppn_toggle_auto_update&do=' . $action), 'wppn_toggle_auto_update', 'wppn_nonce');
+    $toggle_link = '<a href="' . esc_url($toggle_url) . '">' . esc_html($label) . '</a>';
+    array_unshift($links, $settings_link, $toggle_link);
+    return $links;
+}
+add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'wppn_plugin_action_links');
+
+function wppn_toggle_auto_update() {
+    if (!current_user_can('manage_options')) { wp_die(__('Sem permissão.', 'wp-push-notify')); }
+    if (!isset($_GET['wppn_nonce']) || !wp_verify_nonce($_GET['wppn_nonce'], 'wppn_toggle_auto_update')) { wp_die(__('Nonce inválido.', 'wp-push-notify')); }
+    $do = isset($_GET['do']) ? sanitize_key($_GET['do']) : '';
+    if ($do === 'enable') { update_option('wppn_enable_auto_update', '1'); }
+    elseif ($do === 'disable') { update_option('wppn_enable_auto_update', '0'); }
+    wp_safe_redirect(admin_url('plugins.php'));
+    exit;
+}
+add_action('admin_post_wppn_toggle_auto_update', 'wppn_toggle_auto_update');
 
 class WPPushNotify {
 
