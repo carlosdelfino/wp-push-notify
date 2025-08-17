@@ -1,27 +1,45 @@
 # wp-push-notify
-Plugin para o Wordpress que permite notificação push no navegador.
 
+![visitors](https://visitor-badge.laobi.icu/badge?page_id=rapporttecnologia.wp-push-notify)
 
-## Você pode usar este plugin livremente, desde que respeite a licença.
+Plugin para o WordPress que permite notificação push no navegador.
 
-Se você gostou do plugin me faça um pix de R$ 10, pix: consultoria@carlosdelfino.eti.br ou então entre em contato para outras alternativas.
+## Instalação
 
-## Como Colaborar
-
-* Faça o fork do plugin;
-* Preserve a licença e autoria inicial do plugin;
-* Faça os ajustes que achar necessário;
-* De preferencia teste em seu site
-* Faça o pull request (PR). Eu serei grato e reconhecerei seu esforço na lista de colaboradores
-* Faça mais ajustes se achar necessário e repita o ciclo de PR.
-
-## Atualizações e Releases (1.0.50)
-
-- O plugin verifica novas versões via GitHub Releases e exibe aviso no admin quando houver update.
-- Você pode ativar/desativar atualização automática na lista de plugins (link de ação).
-- Releases são publicados automaticamente ao criar tags `v*` no repositório.
+1. Baixe o arquivo ZIP do release mais recente na aba Releases do GitHub.
+2. No painel do WordPress, acesse: Plugins → Adicionar novo → Enviar plugin.
+3. Envie o ZIP, instale e ative.
 
 ## Uso rápido
 
 1. Gere as chaves VAPID (menu do plugin) e configure sua URL do phpList se desejar integração.
-2. Insira o shortcode `[wp_push_notify_form]` em uma página, ou deixe o botão aparecer no footer.
+2. Insira o shortcode `[`wp_push_notify_form`]` em uma página, ou deixe o botão aparecer no footer.
+
+## Suporte
+
+- Abra uma issue em: https://github.com/carlosdelfino/wp-push-notify/issues
+- Descreva claramente o problema, passos para reproduzir e logs/prints se possível.
+
+## Sugerir melhorias
+
+- Use também as issues: https://github.com/carlosdelfino/wp-push-notify/issues
+- Marque como “enhancement” e explique o caso de uso.
+
+## Como colaborar
+
+- Faça fork, crie uma branch e abra um Pull Request.
+- Preserve a licença e a autoria original.
+
+## Contribua (PIX)
+
+Se este plugin ajuda você, considere um PIX de R$ 10 para apoiar a manutenção e o tempo dedicado:
+
+Chave PIX: inter@carlosdelfino.eti.br
+
+Muito obrigado pelo apoio!
+
+## Atualizações e Releases (1.0.51)
+
+- Metadados de autor e requisitos mínimos atualizados no cabeçalho do plugin.
+- Rodapé administrativo com links para repositório e site.
+- Documentação (este README) atualizada com instalação, suporte, melhorias e PIX.

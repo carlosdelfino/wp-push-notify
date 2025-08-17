@@ -2,7 +2,7 @@
 /*
 Plugin Name: WP Push Notify
 Description: Plugin para notificações push e integração com phpList.
-Version: 1.0.50
+Version: 1.0.51
 Author: Carlos Delfino <consultoria@carlosdelfino.eti.br>
 Requires at least: 5.8
 Tested up to: 6.5

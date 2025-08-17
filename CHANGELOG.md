@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.51] - 2025-08-17
+### Changed
+- Cabeçalho do plugin: autor com email, `Requires at least`, `Requires PHP`, `Tested up to`.
+- README.md atualizado com: instalação, suporte via GitHub Issues, sugestões e convite de contribuição (PIX), e badge de visitantes.
+
+### Added
+- Rodapé na página admin do plugin com links para o repositório e site (`rapport.tec.br`).
+
 ## [1.0.50] - 2025-08-17
 ### Added
 - Updater via GitHub Releases (checa `releases/latest`, integra com Updates do WP).
