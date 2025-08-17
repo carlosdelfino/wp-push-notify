@@ -2,7 +2,7 @@
 /*
 Plugin Name: WP Push Notify
 Description: Plugin para notificações push e integração com phpList.
-Version: 0.0.3
+Version: 1.0.50
 Author: Seu Nome
 */
 
